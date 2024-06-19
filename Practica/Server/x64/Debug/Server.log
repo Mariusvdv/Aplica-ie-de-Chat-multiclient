@@ -1,0 +1,10 @@
+﻿  ClientConnector.cpp
+C:\Users\vaduv\OneDrive\Desktop\Server\ClientConnector.cpp(50,22): warning C4566: character represented by universal-character-name '\u021B' cannot be represented in the current code page (1250)
+C:\Users\vaduv\OneDrive\Desktop\Server\ClientConnector.cpp(51,9): warning C4551: function call missing argument list
+C:\Users\vaduv\OneDrive\Desktop\Server\ClientConnector.cpp(88,13): warning C4551: function call missing argument list
+C:\Users\vaduv\OneDrive\Desktop\Server\ClientConnector.cpp(123,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vaduv\OneDrive\Desktop\Server\ClientConnector.cpp(128,10): warning C4101: 'buf': unreferenced local variable
+  main.cpp
+  Utilizator.cpp
+  Generating Code...
+  Server.vcxproj -> C:\Users\vaduv\OneDrive\Documents\GitHub\Aplica-ie-de-Chat-multiclient\Aplica-ie-de-Chat-multiclient\Server\x64\Debug\Server.exe
