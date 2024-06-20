@@ -3,7 +3,11 @@
 int main()
 {
 	ServerConnector::createServerConnector();
+	while (true)
+	{
 
-	ServerConnector::deleteServerConnector();
+	}
+
+	//ServerConnector::deleteServerConnector();
 
 }

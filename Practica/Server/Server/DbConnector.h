@@ -21,6 +21,8 @@ private:
 
 	static DbConnector* instance;
 	static void initializareConexiuneBd();
+
+	
 	DbConnector() {
 		initializareConexiuneBd();
 		std::cout<<"Conexiunea la baza de date a pornit\n\n"; };
@@ -30,5 +32,8 @@ public:
 
 	static DbConnector& createDbConnector();
 	static void deleteDbConnector();
+	static int numaraRanduri(std::string afterFrom);
+	static void coloanaInInterval(std::string whatISelect, std::string table, int inceputInterval, int sfarsitInterval, SOCKET socket);
+	static bool verifyExistence(std::string table, std::string searchObject, std::string value);
 	
 };

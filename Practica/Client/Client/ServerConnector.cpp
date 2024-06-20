@@ -1,20 +1,23 @@
 ﻿#include "ServerConnector.h"
-
+#include"Menu.h"
 const char* SERVER_IP = "127.0.0.1";
 const int PORT = 54000;
 
 SOCKET ServerConnector::sock;
 ServerConnector* ServerConnector::instance = nullptr;
+std::string ServerConnector::nume;
 
 
 ServerConnector::ServerConnector() {
     
     ServerConnector::initializareConexiuneServer();
-    std::string nume;
+    //std::string nume;
     std::cout << "Te rog sa-ti alegi un username pt a participa la chat: ";
     std::cin >> nume;
     std::cout << "\n\n";
     ServerConnector::sendMessage(nume);
+
+    Menu::createMenu(nume);
 
    
 }
@@ -30,7 +33,7 @@ void ServerConnector::initializareConexiuneServer()
     int wsOK = WSAStartup(ver, &wsData);
     if (wsOK != 0) {
         std::cerr << "Nu s-a putut inițializa Winsock! Eroare: " << wsOK << std::endl << std::endl;
-        exit;
+        exit(EXIT_FAILURE);
     }
     else
         std::cout << "WinSockCreat\n\n";
@@ -39,7 +42,7 @@ void ServerConnector::initializareConexiuneServer()
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
         std::cerr << "Eroare la crearea socket-ului.\n\n";
-        return;
+        exit(EXIT_FAILURE);
     }
     std::cout << "Am creat cu succes socketul " << sock << "\n\n";
 
@@ -75,7 +78,8 @@ void ServerConnector::initializareConexiuneServer()
 
 
     std::cout << "Am pornit conexiunea catre server\n\n";
-
+   
+    
 
 
 }
@@ -121,7 +125,7 @@ std::string ServerConnector::receiveMessage()
         std::this_thread::sleep_for(std::chrono::seconds(1));
       
         std::cout << "La revedere" << std::endl;
-        exit;
+        exit(EXIT_FAILURE);
     }
     else {
         std::cout << "Mesaj primit de la server: " << buffer << "\n";

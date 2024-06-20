@@ -24,6 +24,7 @@ class ServerConnector
 private:
 	static SOCKET sock;
 	static ServerConnector* instance;
+	static std::string nume;
 	ServerConnector();
 	~ServerConnector();
 

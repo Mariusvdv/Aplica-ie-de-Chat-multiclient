@@ -15,8 +15,8 @@ private:
 	std::string nume;
 	void runUserThread();
 	SOCKET sock;
-	int nom = 0;
-	std::vector<std::string> messages;
+	//int nom = 0;
+	//std::vector<std::string> messages;
 	std::thread userThread;
 public:
 
@@ -29,8 +29,8 @@ public:
 	//void detachThread() { userThread.detach(); }
 	const std::string getName()const { return nume; }
     const SOCKET getSocket() const { return sock; }
-	const std::vector<std::string> getMessages() const { return messages; }
-	const int getNumberOfMessages() { return nom; }
+	//const std::vector<std::string> getMessages() const { return messages; }
+	//const int getNumberOfMessages() { return nom; }
 	friend std::ostream& operator<<(std::ostream& os, const Utilizator& user);
 
 };

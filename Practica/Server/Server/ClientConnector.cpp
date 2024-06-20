@@ -25,6 +25,9 @@ ClientConnector::~ClientConnector()
     std::cout << "Serverul a fost distrus\n\n";
 }
 
+
+
+
 ClientConnector& ClientConnector::createClientConnector()
 {
     if (!instance)
@@ -151,6 +154,43 @@ std::string ClientConnector::receiveMessage(SOCKET client_socket)
     }
     std::string str(buffer);
     return str;
+
+
+}
+
+void ClientConnector::Menu(SOCKET sock)
+{
+    //trimit numarul de clienti din baza de date catre noc pe client
+
+    //clientul ii afiseaza si alege cu cine vrea sa converseze.
+    //apoi eu primesc numele destinatiei si verfic daca exista
+    //caz afirmativ, trimit "ok" 
+    //caz negativ, cer altul
+
+    int n = DbConnector::numaraRanduri("users");
+    if(n>0)
+    {
+        ClientConnector::sendMessage(sock, std::to_string(n));
+        DbConnector::coloanaInInterval("username", "users", 1, 4, sock);
+    }
+
+}
+
+void ClientConnector::chooseDestination(SOCKET sock)
+{
+    std::string destination = ClientConnector::receiveMessage(sock);
+    if (DbConnector::verifyExistence("users", "username", destination)==true)
+    {
+        ClientConnector::sendMessage(sock, "ok");
+    }
+    else
+    {
+        ClientConnector::sendMessage(sock, "notok");
+    }
+}
+
+void ClientConnector::Conversation(SOCKET sock)
+{
 
 
 }
