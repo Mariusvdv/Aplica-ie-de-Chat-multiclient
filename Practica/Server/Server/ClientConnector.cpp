@@ -2,13 +2,15 @@
 #include "ClientConnector.h"
 #include"DbConnector.h"
 
-
+#include <cstring> // Pentru memset
+#include <string.h>
+#include <unistd.h>
 
 const char* SERVER_IP = "127.0.0.1";
 const int PORT = 54000;
 
 ClientConnector* ClientConnector::instance = nullptr;
-SOCKET ClientConnector::listening;
+int ClientConnector::listening;
 std::vector<Utilizator*> ClientConnector::utilizatori;
 
 ClientConnector::ClientConnector()
@@ -52,53 +54,54 @@ void ClientConnector::deleteClientConnector()
 
 void ClientConnector::initializareSoketAscultare()
 {
-    WSADATA wsData;
-    WORD ver = MAKEWORD(2, 2);
-    int wsOK = WSAStartup(ver, &wsData);
-    if (wsOK != 0) {
-        std::cerr << "Nu s-a putut inițializa Winsock! Eroare: " << wsOK << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    else
-        std::cout << "WinSockCreat\n\n";
+    
     // Creare socket
     listening = socket(AF_INET, SOCK_STREAM, 0);
-    if (listening == INVALID_SOCKET) {
-        std::cerr << "Nu s-a putut crea socket-ul! Eroare: " << WSAGetLastError() << std::endl;
-        WSACleanup();
+    if (listening == -1) {
+        perror("Nu s-a putut crea socket-ul");
         return;
     }
     else
         std::cout << "Socketul de ascultare a fost creat\n\n";
 
-    // Bind socket
+    // Configurare adresa de legătură (bind)
     sockaddr_in hint;
+    memset(&hint, 0, sizeof(hint));
     hint.sin_family = AF_INET;
     hint.sin_port = htons(PORT);
-    hint.sin_addr.S_un.S_addr = INADDR_ANY;
-    bind(listening, (sockaddr*)&hint, sizeof(hint));
+    hint.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(listening, (sockaddr*)&hint, sizeof(hint)) == -1) {
+        perror("Eroare la legarea socket-ului");
+        close(listening); // închide socket-ul în caz de eroare
+        return;
+    }
+
     // Ascultă pentru conexiuni
-    listen(listening, SOMAXCONN);
+    if (listen(listening, SOMAXCONN) == -1) {
+        perror("Eroare la ascultarea pe socket");
+        close(listening); // închide socket-ul în caz de eroare
+        return;
+    }
+
+    std::cout << "Așteptăm conexiuni pe portul " << PORT << "...\n";
 }
 
 void ClientConnector::creereSoketNou()
 {
     while (true) {
         sockaddr_in client;
-        int clientSize = sizeof(client);
-        SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
+        socklen_t clientSize = sizeof(client);
+        int clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
 
-        if (clientSocket == INVALID_SOCKET) {
-            std::cerr << "Nu s-a putut accepta conexiunea! Eroare: " << WSAGetLastError() << std::endl;
-            closesocket(clientSocket);
-            clientSocket = INVALID_SOCKET;
+        if (clientSocket == -1) {
+            perror("Eroare la acceptarea conexiunii");
             continue;
             //WSACleanup();
             exit;
         }
         else
         {
-
 
             std::cout << "A fost acceptat socketul " << clientSocket << "\n\n";
             ClientConnector::utilizatori.push_back(new Utilizator(clientSocket));
@@ -127,38 +130,38 @@ void ClientConnector::printUtilizatori()
     }
 }
 
-void ClientConnector::sendMessage(const SOCKET client_socket, const std::string message)
+void ClientConnector::sendMessage(const int client_socket, const std::string message)
 {
     send(client_socket, message.c_str(), strlen(message.c_str()), 0);
 }
 
-std::string ClientConnector::receiveMessage(SOCKET client_socket)
+std::string ClientConnector::receiveMessage(int client_socket)
 {
-    char buf[4096];
-
-    // Primește cererea de la client
     char buffer[4096];
     memset(buffer, 0, sizeof(buffer));
+
+    // Primește cererea de la client
     int bytesReceived = recv(client_socket, buffer, sizeof(buffer), 0);
     if (bytesReceived == -1) {
-        std::cerr << "Eroare la primirea mesajului de la server.\n";
-        std::cout << "Clientul cu socketul " << client_socket << "s-a deconectat deconectat\n\n";
-        closesocket(client_socket);
-        client_socket = INVALID_SOCKET;
-        //FD_CLR(current_sock, &readfds); // Eliminam socket-ul din setul de descriptori monitorizati
-        //std::cout << "Client deconectat\n";
+        std::cerr << "Eroare la primirea mesajului de la client.\n";
+        std::cout << "Clientul cu socketul " << client_socket << " s-a deconectat.\n\n";
+        close(client_socket);
+        return "STOP";
+    }
+    else if (bytesReceived == 0) {
+        std::cout << "Clientul cu socketul " << client_socket << " s-a deconectat.\n\n";
+        close(client_socket);
         return "STOP";
     }
     else {
-        std::cout << "Mesaj primit de la server: " << buffer << "\n";
+        std::cout << "Mesaj primit de la client: " << buffer << "\n";
     }
+    
     std::string str(buffer);
     return str;
-
-
 }
 
-void ClientConnector::Menu(SOCKET sock)
+void ClientConnector::Menu(int sock)
 {
     //trimit numarul de clienti din baza de date catre noc pe client
 
@@ -176,7 +179,7 @@ void ClientConnector::Menu(SOCKET sock)
 
 }
 
-void ClientConnector::chooseDestination(SOCKET sock)
+void ClientConnector::chooseDestination(int sock)
 {
     std::string destination = ClientConnector::receiveMessage(sock);
     if (DbConnector::verifyExistence("users", "username", destination)==true)
@@ -189,7 +192,7 @@ void ClientConnector::chooseDestination(SOCKET sock)
     }
 }
 
-void ClientConnector::Conversation(SOCKET sock)
+void ClientConnector::Conversation(int sock)
 {
 
 

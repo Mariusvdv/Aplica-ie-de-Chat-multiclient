@@ -1,7 +1,10 @@
 #pragma once
 
 #include <iostream>
-#include <winsock2.h>
+//#include <winsock2.h>
+
+#include <sys/socket.h>  // pentru funcții de socket
+#include <netinet/in.h>  // pentru structuri de adrese IP
 
 #include <cstring>
 #include <cstdlib>
@@ -9,12 +12,12 @@
 #include <thread> // pentru std::this_thread::sleep_for
 #include <chrono>
 
-#pragma comment (lib, "ws2_32.lib")
-#pragma comment (lib, "odbc32.lib")
+//#pragma comment (lib, "ws2_32.lib")
+//#pragma comment (lib, "odbc32.lib")
 
 
 
-#include <ws2tcpip.h>
+//#include <ws2tcpip.h>
 
 
 
@@ -22,7 +25,7 @@
 class ServerConnector
 {
 private:
-	static SOCKET sock;
+	static int sock;
 	static ServerConnector* instance;
 	static std::string nume;
 	ServerConnector();

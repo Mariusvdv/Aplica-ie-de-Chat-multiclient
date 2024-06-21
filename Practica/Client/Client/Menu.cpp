@@ -11,7 +11,7 @@ std::string Menu::sursa;
 Menu::Menu(std::string surs)
 {
 	sursa = surs;
-	system("cls");
+	system("clear");
 	Conversation::deleteConversation();
 	std::cout << "\t\tMeniu\n\n";
 	//primesc toti userii din baza de date;

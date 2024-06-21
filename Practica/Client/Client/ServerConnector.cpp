@@ -1,9 +1,11 @@
 ﻿#include "ServerConnector.h"
 #include"Menu.h"
+#include <unistd.h>
+#include <arpa/inet.h>
+
 const char* SERVER_IP = "127.0.0.1";
 const int PORT = 54000;
-
-SOCKET ServerConnector::sock;
+int ServerConnector::sock;
 ServerConnector* ServerConnector::instance = nullptr;
 std::string ServerConnector::nume;
 
@@ -28,16 +30,7 @@ ServerConnector::~ServerConnector()
 
 void ServerConnector::initializareConexiuneServer()
 {
-    WSADATA wsData;
-    WORD ver = MAKEWORD(2, 2);
-    int wsOK = WSAStartup(ver, &wsData);
-    if (wsOK != 0) {
-        std::cerr << "Nu s-a putut inițializa Winsock! Eroare: " << wsOK << std::endl << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    else
-        std::cout << "WinSockCreat\n\n";
-
+    
     // Crearea socket-ului pentru client
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
@@ -55,7 +48,7 @@ void ServerConnector::initializareConexiuneServer()
     // Conectarea la server
     if (connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
         std::cerr << "Eroare la conectarea la server.\n\n";
-        closesocket(sock);
+        close(sock);
         std::cout << "Serverul este oprit, aplicatia se va opri in 5 secunde\n\n";
         std::cout << " 5 " << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1)); // Așteaptă 5 secunde

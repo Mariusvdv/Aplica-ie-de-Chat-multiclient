@@ -1,15 +1,16 @@
 #pragma once
 #include<iostream>
+
 #include "ClientConnector.h"
-#include <Windows.h>
+//#include <Windows.h>
 #include <sqltypes.h>
 
-#include <tchar.h>
+//#include <tchar.h>
 #include <sql.h>
 #include <sqlext.h>
 #include <codecvt>
 
-#pragma comment (lib, "odbc32.lib")
+#pragma comment (lib, "libobdc.so")
 
 class DbConnector
 {
@@ -33,7 +34,7 @@ public:
 	static DbConnector& createDbConnector();
 	static void deleteDbConnector();
 	static int numaraRanduri(std::string afterFrom);
-	static void coloanaInInterval(std::string whatISelect, std::string table, int inceputInterval, int sfarsitInterval, SOCKET socket);
+	static void coloanaInInterval(std::string whatISelect, std::string table, int inceputInterval, int sfarsitInterval, int socket);
 	static bool verifyExistence(std::string table, std::string searchObject, std::string value);
 	
 };

@@ -34,3 +34,12 @@ Aplicație de Chat multiclient
 - Am creat un meniu care permite afisarea tuturor userilor existenti in baza de date (in zilele urmatoare urmeaza creerea unor meniuri particularizate (conversatii doar cu contactele adaugate anterior ))
 - Utilizatorul poate introduce un utilizator din meniul afisat si daca acesta exista, va putea incepe conversatia(pe viitor va trebui sa existe in lista de contacte);
 - Am corectat diverse bug-uri anterioare ale codului si am adaugat noi verificari necesare in gasirea si gestionarea erorilor; 
+
+# 21.06.2024
+
+- Am inceput migrarea aplicatiei de la windows catre linux
+- Am descarcat aplicatiile initiale pentru dezvoltarea aplicatiei pe vm
+- Am modificat codul pentru a deveni compatibil cu linux
+- Am studiat comenzi de terminal pentru gestionarea dockerului pe care se afla baza de date
+- Am studiat extensii ale compilarii gcc
+- Am exersat utilizarea bazei de date din terminal
