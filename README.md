@@ -43,3 +43,11 @@ Aplicație de Chat multiclient
 - Am studiat comenzi de terminal pentru gestionarea dockerului pe care se afla baza de date
 - Am studiat extensii ale compilarii gcc
 - Am exersat utilizarea bazei de date din terminal
+
+# weekend
+
+-Am stabilizat conexiunea cu baza de date
+-M-am familiarizat cu rularea si dezvoltarea aplicatiei pe Linux
+-Am dezvoltat meniul si am realizat conversatiile
+-Am realizat trecerea din meniu in conversatie si invers
+-Am adus aplicatia la un stadiu grafic si functional multumitor, dar care va fi dezvoltat in urmatoarele zile

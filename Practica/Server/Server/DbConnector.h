@@ -34,7 +34,7 @@ public:
 	static DbConnector& createDbConnector();
 	static void deleteDbConnector();
 	static int numaraRanduri(std::string afterFrom);
-	static void coloanaInInterval(std::string whatISelect, std::string table, int inceputInterval, int sfarsitInterval, int socket);
+	static void selectColoana( std::string cautare, int socket);
 	static bool verifyExistence(std::string table, std::string searchObject, std::string value);
 	
 };

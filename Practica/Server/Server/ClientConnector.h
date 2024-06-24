@@ -41,11 +41,11 @@ public:
 
     static void printUtilizatori();
 
-    static void sendMessage(const int client_socket, const std::string message);
-    static std::string receiveMessage(int client_socket);
+    static void sendMessage(const int &client_socket, const std::string message);
+    static std::string receiveMessage(int &client_socket);
 
-    static void Menu(int sock);
-    static void chooseDestination(int sock);
-    static void Conversation(int sock);
+    static void Menu(int &sock);
+    static void chooseDestination(int &sock);
+    static void Conversation(int &sock);
 };
 

@@ -28,7 +28,9 @@ void Utilizator::runUserThread()
         }
         if (action == "CONVERSATION")
         {
+            ClientConnector::Conversation(sock);
 
+            
         }
     }
     //ClientConnector::printUtilizatori();

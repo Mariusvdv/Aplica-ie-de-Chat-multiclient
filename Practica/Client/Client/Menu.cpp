@@ -21,9 +21,12 @@ Menu::Menu(std::string surs)
 	ServerConnector::sendMessage("MENU");
 
 	int noc = stoi(ServerConnector::receiveMessage());
+	 ServerConnector::sendMessage("ack");
 
 	for (int i = 0; i < noc; i++)
-		std::cout << ServerConnector::receiveMessage() << "\n";
+		{std::cout << ServerConnector::receiveMessage() << "\n";
+		 ServerConnector::sendMessage("ack");
+		}
 	std::cout << "\nAlege cu cine vrei sa conversezi: ";
 	std::string destinatie;
 	ServerConnector::sendMessage("VerifyDestination");

@@ -1,4 +1,4 @@
-﻿#pragma once
+﻿//#pragma once
 #include "ClientConnector.h"
 #include"DbConnector.h"
 
@@ -130,22 +130,23 @@ void ClientConnector::printUtilizatori()
     }
 }
 
-void ClientConnector::sendMessage(const int client_socket, const std::string message)
+void ClientConnector::sendMessage(const int &client_socket, const std::string message)
 {
     send(client_socket, message.c_str(), strlen(message.c_str()), 0);
 }
 
-std::string ClientConnector::receiveMessage(int client_socket)
+std::string ClientConnector::receiveMessage(int &client_socket)
 {
     char buffer[4096];
     memset(buffer, 0, sizeof(buffer));
 
     // Primește cererea de la client
     int bytesReceived = recv(client_socket, buffer, sizeof(buffer), 0);
-    if (bytesReceived == -1) {
+    if (bytesReceived <=0) {
         std::cerr << "Eroare la primirea mesajului de la client.\n";
         std::cout << "Clientul cu socketul " << client_socket << " s-a deconectat.\n\n";
         close(client_socket);
+        client_socket = -1;
         return "STOP";
     }
     else if (bytesReceived == 0) {
@@ -161,7 +162,7 @@ std::string ClientConnector::receiveMessage(int client_socket)
     return str;
 }
 
-void ClientConnector::Menu(int sock)
+void ClientConnector::Menu(int &sock)
 {
     //trimit numarul de clienti din baza de date catre noc pe client
 
@@ -171,15 +172,19 @@ void ClientConnector::Menu(int sock)
     //caz negativ, cer altul
 
     int n = DbConnector::numaraRanduri("users");
-    if(n>0)
+    ClientConnector::sendMessage(sock, std::to_string(n));
+    std::string ack=ClientConnector::receiveMessage(sock);
+    if(ack!="ack")
+    return;
+    
     {
-        ClientConnector::sendMessage(sock, std::to_string(n));
-        DbConnector::coloanaInInterval("username", "users", 1, 4, sock);
+        std::string query="SELECT username FROM (SELECT *, ROW_NUMBER() OVER(ORDER BY id) AS RowNum FROM users) AS UserWithRowNum WHERE RowNum <= "+std::to_string(n);
+        DbConnector::selectColoana(query, sock);
     }
 
 }
 
-void ClientConnector::chooseDestination(int sock)
+void ClientConnector::chooseDestination(int &sock)
 {
     std::string destination = ClientConnector::receiveMessage(sock);
     if (DbConnector::verifyExistence("users", "username", destination)==true)
@@ -192,8 +197,42 @@ void ClientConnector::chooseDestination(int sock)
     }
 }
 
-void ClientConnector::Conversation(int sock)
+void ClientConnector::Conversation(int &sock)
 {
+    ClientConnector::sendMessage(sock,"ack");
+    std::string username1=ClientConnector::receiveMessage(sock);
+    ClientConnector::sendMessage(sock,"ack");
+    std::string username2=ClientConnector::receiveMessage(sock);
+  
 
+    std::string afterFrom= " messages m "
+                        "JOIN users u1 ON m.sursa = u1.id "
+                        "JOIN users u2 ON m.destinatie = u2.id "
+                        "WHERE (u1.username = '" + username1 + "' AND u2.username = '" + username2 + "') "
+                        "   OR (u1.username = '" + username2 + "' AND u2.username = '" + username1 + "');";
+
+    int n = DbConnector::numaraRanduri(afterFrom);
+    std::cout<<n;
+
+    {
+        //std::cout<<std::endl<<n<<std::endl;
+        ClientConnector::sendMessage(sock, std::to_string(n));
+        std::string ack = ClientConnector::receiveMessage(sock);
+
+        std::string query="SELECT mesaj"
+    " FROM ("
+    "SELECT m.mesaj,"
+           " ROW_NUMBER() OVER (ORDER BY m.id) AS RowNum"
+    " FROM messages m"
+    " JOIN users u1 ON m.sursa = u1.id"
+    " JOIN users u2 ON m.destinatie = u2.id"
+    " WHERE (u1.username = '" +username1+"' AND u2.username = '"+username2+"')"
+    " OR (u1.username = '"+username2+"' AND u2.username = '"+username1+"')"
+    ") AS UserWithRowNum"
+    " WHERE RowNum <= "+std::to_string(n)+";";
+        DbConnector::selectColoana(query, sock);
+    
+        
+    }
 
 }

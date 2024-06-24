@@ -76,6 +76,8 @@ int DbConnector::numaraRanduri(std::string afterFrom)
     //cautare = "SELECT username FROM users WHERE id > " + std::to_string(nrAnterior) + " AND id <= " + std::to_string(nrAnterior + 10);
     std::string g = "users";
     cautare = "SELECT COUNT(*) FROM " + afterFrom;
+
+    std::cout<<"\n\n"<<cautare<<"\n\n";
     //cautare = "SELECT username FROM users WHERE id > " + std::to_string(0) + " AND id <= " + std::to_string(10);
 
    // std::string cautare = "SELECT COUNT(*) FROM " + afterFrom;
@@ -85,26 +87,28 @@ int DbConnector::numaraRanduri(std::string afterFrom)
 //SQLCHAR* sqlCharStr = reinterpret_cast<SQLCHAR*>(const_cast<char*>(charStr));
 
 
-    std::wstring wide_query(cautare.begin(), cautare.end());
+    //std::wstring wide_query(cautare.begin(), cautare.end());
 
-    std::cout<<cautare;
+     ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
 
-    std::cout<<50;
+    //std::cout<<cautare;
+
+    //std::cout<<50;
 // Execută interogarea SQL
-    ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
+    //ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
 
     if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
         // Citire rezultat
 
-        std::cout<<10;
+        //std::cout<<10;
        // std::string var;
         SQLINTEGER numar;
         ret = SQLFetch(hStmt);
         if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
             ret = SQLGetData(hStmt, 1, SQL_C_LONG, &numar, 0, NULL);
-            std::cout<<1;
+            //std::cout<<1;
             if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
-                std::cout<<2;
+                //std::cout<<2;
                 int nr = static_cast<int>(numar);
                 std::cout << nr << std::endl << std::endl;
                 SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
@@ -114,18 +118,18 @@ int DbConnector::numaraRanduri(std::string afterFrom)
             {
                 std::cout << 0 << std::endl << std::endl;
                 SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
-                std::cout<<3;
+               // std::cout<<3;
                 return 0;
             }
         }
     }
     std::cout << 0 << std::endl << std::endl;
     SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
-    std::cout<<4;
+    //std::cout<<4;
     return 0;
 }
 
-void DbConnector::coloanaInInterval(std::string whatISelect, std::string table, int inceputInterval, int sfarsitInterval, int socket)
+void DbConnector::selectColoana(std::string cautare, int socket)
 {
     SQLHANDLE hStmt;
     SQLRETURN ret;
@@ -135,16 +139,17 @@ void DbConnector::coloanaInInterval(std::string whatISelect, std::string table, 
 
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "SQLAllocHandle error" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
         return;
     }
 
-    std::string cautare = "SELECT "+whatISelect+" FROM (SELECT *, ROW_NUMBER() OVER(ORDER BY id) AS RowNum FROM " + table + ") AS UserWithRowNum WHERE RowNum >= " + std::to_string(inceputInterval) + " AND RowNum <= " + std::to_string(sfarsitInterval);
-
+    //std::string cautare = "SELECT "+whatISelect+" FROM (SELECT *, ROW_NUMBER() OVER(ORDER BY id) AS RowNum FROM " + table + ") AS UserWithRowNum WHERE RowNum <= " + std::to_string(maxx)+condition;
+    ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
     
-    std::wstring wide_query(cautare.begin(), cautare.end());
+    //std::wstring wide_query(cautare.begin(), cautare.end());
 
 // Execută interogarea SQL
-    ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
+    //ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
 
     // ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
     
@@ -169,6 +174,11 @@ void DbConnector::coloanaInInterval(std::string whatISelect, std::string table, 
         // Afișăm numele de utilizator (username)
         std::cout << "Trimite " << username << std::endl;
         ClientConnector::sendMessage(socket, reinterpret_cast<const char*>(username));
+        std::string ack=ClientConnector::receiveMessage(socket);
+        if(ack!="ack")
+        {
+            return;
+        }
     }
 
     // Verificăm dacă SQLFetch a eșuat din alt motiv decât SQL_NO_DATA
@@ -197,10 +207,13 @@ bool DbConnector::verifyExistence(std::string table, std::string searchObject, s
 
     std::string cautare = "SELECT * FROM  " + table + " WHERE " + searchObject + " = '"+ value+"'";
 
-    std::wstring wide_query(cautare.begin(), cautare.end());
+    // std::wstring wide_query(cautare.begin(), cautare.end());
 
-    // Executați interogarea SQL
-    ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
+    // // Executați interogarea SQL
+    // ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
+    
+    ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
+
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "SQLExecDirect error" << std::endl;
         SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
@@ -210,8 +223,13 @@ bool DbConnector::verifyExistence(std::string table, std::string searchObject, s
 
     // Parcurgem fiecare rând rezultat
     if ((SQLFetch(hStmt)) == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
         return true;
     }
     else
+    {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
         return false;
+        
+    }
 }

@@ -37,5 +37,6 @@ public:
 	static void deleteServerConnector();
 	static void sendMessage(const std::string mesaj);
 	static std::string receiveMessage();
+	//static std::string getNume(){return nume;}
 };
 
