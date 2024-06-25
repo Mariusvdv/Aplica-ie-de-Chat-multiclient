@@ -36,5 +36,7 @@ public:
 	static int numaraRanduri(std::string afterFrom);
 	static void selectColoana( std::string cautare, int socket);
 	static bool verifyExistence(std::string table, std::string searchObject, std::string value);
+	static void ChatMessage(std::string sursa, std::string destinatia, std::string mesaj);
+	static void log(std::string nume);
 	
 };

@@ -1,6 +1,8 @@
 #include "Conversation.h"
 #include "Menu.h"
 #include "ServerConnector.h"
+#include <iostream>
+#include <string>
 
 Conversation* Conversation::instance = nullptr;
 
@@ -69,11 +71,16 @@ void Conversation::deleteConversation()
 
 void Conversation::runConversation(std::string sursa,std::string destinatia)
 {
-	std::cout<<"\n\nCe vrei sa faci?\n 1.Meniu\t\t 2.Refresh la mesaje\t\t 3. Mesaj nou\n\n";
 	int nr;
-	std::cout<<"Introdu aici optiunea ta (doar cifra):";
-	std::cin>>nr;
-	if(nr>0&&nr<=3)
+	while(nr<=0||nr>3)
+	{	std::cout<<"\n\nCe vrei sa faci?\n 1.Meniu\t\t 2.Refresh la mesaje\t\t 3. Mesaj nou\n\n";
+	//int nr;
+		std::cout<<"Introdu aici optiunea ta (doar cifra):";
+		std::cin>>nr;
+		//std::cin.ignore(); 
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');}
+	
 		switch(nr)
 		{
 			case 1: 
@@ -87,13 +94,36 @@ void Conversation::runConversation(std::string sursa,std::string destinatia)
 			break;
 
 			case 3:
+			std::string mesaj;
+			std::cout<<"\nIntrodu noul mesaj pentru "<<destinatia<<": ";
+			//std::cin>>mesaj;
+			
+			std::getline(std::cin, mesaj);
+			std::cout<<"\n"<<mesaj<<"\n\n";
+
+			Conversation::ChatMessage(sursa,destinatia,mesaj);
+
 			break;
-
-
-
 		}
-		else
-		{
-			runConversation( sursa,destinatia);
-		}
+
+
+
+		
+}
+
+void Conversation::ChatMessage(std::string sursa, std::string destinatie, std::string mesaj)
+{
+	ServerConnector::sendMessage("MESAJ");
+	std::string ack=ServerConnector::receiveMessage();
+	ServerConnector::sendMessage(sursa);
+	ack=ServerConnector::receiveMessage();
+	ServerConnector::sendMessage(destinatie);
+	ack=ServerConnector::receiveMessage();
+	ServerConnector::sendMessage(mesaj);
+	ack=ServerConnector::receiveMessage();
+	std::cout<<ack;
+	deleteConversation();
+	Conversation::createConversation(sursa,destinatia);
+
+
 }

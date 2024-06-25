@@ -1,5 +1,5 @@
 #include "Utilizator.h"
-
+#include"DbConnector.h"
 #include "ClientConnector.h"
 std::ostream& operator<<(std::ostream& os, const Utilizator& user) {
     os << "Nume: " << user.nume << "\n";
@@ -15,7 +15,10 @@ std::ostream& operator<<(std::ostream& os, const Utilizator& user) {
 void Utilizator::runUserThread()
 {
     nume = ClientConnector::receiveMessage(sock);
-    while (true)
+    
+    DbConnector::log(nume);
+
+    while (running)
     {
         std::string action = ClientConnector::receiveMessage(sock);
         if (action == "MENU")
@@ -30,7 +33,10 @@ void Utilizator::runUserThread()
         {
             ClientConnector::Conversation(sock);
 
-            
+        }
+        if(action=="MESAJ")
+        {
+            ClientConnector::ChatMessage(sock);
         }
     }
     //ClientConnector::printUtilizatori();

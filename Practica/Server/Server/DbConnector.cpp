@@ -233,3 +233,91 @@ bool DbConnector::verifyExistence(std::string table, std::string searchObject, s
         
     }
 }
+
+void DbConnector::ChatMessage(std::string sursa, std::string destinatia, std::string mesaj)
+{
+    SQLHANDLE hStmt;
+    SQLRETURN ret;
+
+    // Alocați un handle de statement
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hStmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLAllocHandle error" << std::endl;
+        return ; //eroare
+    }
+
+    std::string cautare = "INSERT INTO messages (sursa, destinatie, mesaj) "
+                          "SELECT u1.id, u2.id, '" + mesaj + "' "
+                          "FROM users u1, users u2 "
+                          "WHERE u1.username = '" + sursa + "' AND u2.username = '" + destinatia + "'";
+  
+    ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLExecDirect error" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return; //eroare
+    }
+
+
+    // Parcurgem fiecare rând rezultat
+    if (ret == SQL_SUCCESS_WITH_INFO) {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        std::cout<<"\nMesaj trimis\n\n";
+        return ;
+    }
+    else
+    {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        std::cout<<"\nMesajul nu a putut fi trimis\n\n";
+        return ;
+        
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+}
+
+void DbConnector::log(std::string nume)
+{
+    bool b=verifyExistence("users", "username", nume);
+    if(b==true)
+        return;
+
+      SQLHANDLE hStmt;
+    SQLRETURN ret;
+
+    // Alocați un handle de statement
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hStmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLAllocHandle error" << std::endl;
+        return ; //eroare
+    }
+
+    std::string cautare = "INSERT INTO users (username) VALUES ('" + nume + "');";
+  
+    ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLExecDirect error" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return; //eroare
+    }
+
+
+    // Parcurgem fiecare rând rezultat
+    if (ret == SQL_SUCCESS_WITH_INFO) {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        std::cout<<"\nUsername inserat cu succes\n\n";
+        return ;
+    }
+    else
+    {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        std::cout<<"\nUsername neinserat\n\n";
+        return ;
+        
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+
+}

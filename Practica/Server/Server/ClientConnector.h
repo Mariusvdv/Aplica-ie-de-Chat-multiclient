@@ -32,7 +32,7 @@ private:
     static void creereSoketNou();
     static void initializareServer();
     static std::vector<Utilizator*> utilizatori;
-
+    static void disconnectUtilizator(int &socket);
     
 public:
     static ClientConnector& createClientConnector();
@@ -47,5 +47,6 @@ public:
     static void Menu(int &sock);
     static void chooseDestination(int &sock);
     static void Conversation(int &sock);
+    static void ChatMessage(int &sock);
 };
 

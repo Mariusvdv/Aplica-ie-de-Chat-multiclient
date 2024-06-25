@@ -46,8 +46,18 @@ Aplicație de Chat multiclient
 
 # weekend
 
--Am stabilizat conexiunea cu baza de date
--M-am familiarizat cu rularea si dezvoltarea aplicatiei pe Linux
--Am dezvoltat meniul si am realizat conversatiile
--Am realizat trecerea din meniu in conversatie si invers
--Am adus aplicatia la un stadiu grafic si functional multumitor, dar care va fi dezvoltat in urmatoarele zile
+- Am stabilizat conexiunea cu baza de date
+- M-am familiarizat cu rularea si dezvoltarea aplicatiei pe Linux
+- Am dezvoltat meniul si am realizat conversatiile
+- Am realizat trecerea din meniu in conversatie si invers
+- Am adus aplicatia la un stadiu grafic si functional multumitor, dar care va fi dezvoltat in urmatoarele zile
+
+# 25.06.2024
+
+- Am gestionat si stabilizat deconectarea clientului de la server
+- Am gestionat deconectarea abrupta a clientului pentru a nu afecta functionalitatea serverului
+- Am reparat anumite probleme de citire de la tastatura si erorile cauzate de acestea
+- Am adaugat functionalitatea trimiterii de mesaje
+- Am adaugat functionalitatea adaugarii de useri noi pe baza de nume, automat daca acestia nu sunt deja inregistrati
+
+

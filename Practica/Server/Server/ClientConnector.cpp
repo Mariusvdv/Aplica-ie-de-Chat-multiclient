@@ -15,6 +15,7 @@ std::vector<Utilizator*> ClientConnector::utilizatori;
 
 ClientConnector::ClientConnector()
 {
+    close(listening);
     DbConnector::createDbConnector();
     ClientConnector::initializareServer();
     std::cout << "Serverul a fost creat\n\n";
@@ -96,9 +97,8 @@ void ClientConnector::creereSoketNou()
 
         if (clientSocket == -1) {
             perror("Eroare la acceptarea conexiunii");
-            continue;
-            //WSACleanup();
-            exit;
+            close(clientSocket);
+            //disconnectUtilizator(clientSocket);
         }
         else
         {
@@ -123,6 +123,17 @@ void ClientConnector::initializareServer()
     acceptClientsThread.detach();
 }
 
+void ClientConnector::disconnectUtilizator(int& socket) {
+    for (auto it = utilizatori.begin(); it != utilizatori.end(); ++it) {
+        if ((*it)->getSocket() == socket) {
+            std::cout << "Deconectare utilizator cu socketul " << socket << "\n";
+            delete *it;
+            utilizatori.erase(it);
+            break;
+        }
+    }
+}
+
 void ClientConnector::printUtilizatori()
 {
     for (const auto& user : ClientConnector::utilizatori) {
@@ -145,13 +156,9 @@ std::string ClientConnector::receiveMessage(int &client_socket)
     if (bytesReceived <=0) {
         std::cerr << "Eroare la primirea mesajului de la client.\n";
         std::cout << "Clientul cu socketul " << client_socket << " s-a deconectat.\n\n";
-        close(client_socket);
+        //close(client_socket);
+        disconnectUtilizator(client_socket);
         client_socket = -1;
-        return "STOP";
-    }
-    else if (bytesReceived == 0) {
-        std::cout << "Clientul cu socketul " << client_socket << " s-a deconectat.\n\n";
-        close(client_socket);
         return "STOP";
     }
     else {
@@ -235,4 +242,17 @@ void ClientConnector::Conversation(int &sock)
         
     }
 
+}
+
+void ClientConnector::ChatMessage(int &sock)
+{
+    ClientConnector::sendMessage(sock,"ack");
+    std::string sursa=ClientConnector::receiveMessage(sock);
+    ClientConnector::sendMessage(sock,"ack");
+    std::string destinatia=ClientConnector::receiveMessage(sock);
+    ClientConnector::sendMessage(sock,"ack");
+    std::string mesaj=ClientConnector::receiveMessage(sock);
+    DbConnector::ChatMessage(sursa,destinatia,mesaj);
+    ClientConnector::sendMessage(sock,"ackafterInsert");
+    
 }
