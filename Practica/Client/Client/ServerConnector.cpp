@@ -112,11 +112,13 @@ void ServerConnector::deleteServerConnector()
 
 void ServerConnector::sendMessage(const std::string mesaj)
 {
+     //std::cout<<"Trimit "<<mesaj<<"\n";
     send(sock, mesaj.c_str(), strlen(mesaj.c_str()), 0);
 }
 
 std::string ServerConnector::receiveMessage()
 {
+   // std::cout<<"Astept "<<"\n";
     char buffer[4096];
     memset(buffer, 0, sizeof(buffer));
     int bytesReceived = recv(sock, buffer, sizeof(buffer), 0);
@@ -139,7 +141,7 @@ std::string ServerConnector::receiveMessage()
         exit(EXIT_FAILURE);
     }
     else {
-        std::cout << "Mesaj primit de la server: " << buffer << "\n";
+       // std::cout << "Mesaj primit de la server: " << buffer << "\n";
     }
     std::string str(buffer);
     return str;

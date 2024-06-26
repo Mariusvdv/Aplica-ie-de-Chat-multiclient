@@ -60,4 +60,8 @@ Aplicație de Chat multiclient
 - Am adaugat functionalitatea trimiterii de mesaje
 - Am adaugat functionalitatea adaugarii de useri noi pe baza de nume, automat daca acestia nu sunt deja inregistrati
 
-
+# 26.06.2024
+- Aplicatie de tip client-server-db
+- Meniu din care userul isi poate alege urmatoarea conversatie
+- Existenta grupuri de chat
+- Utilizatorii pot trimite mesaje, sa schimbe chatul si sa isi stearga mesajele

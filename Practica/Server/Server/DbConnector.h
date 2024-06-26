@@ -34,9 +34,11 @@ public:
 	static DbConnector& createDbConnector();
 	static void deleteDbConnector();
 	static int numaraRanduri(std::string afterFrom);
-	static void selectColoana( std::string cautare, int socket);
+	static void selectColoana( std::string cautare,  int nrDeColoane, int socket);
 	static bool verifyExistence(std::string table, std::string searchObject, std::string value);
-	static void ChatMessage(std::string sursa, std::string destinatia, std::string mesaj);
+	static bool verifyExistenceUserInGrup(std::string table, std::string searchObject, std::string value,std::string user);
+	static void ChatMessage(std::string sursa, std::string destinatia, std::string mesaj, std::string type);
 	static void log(std::string nume);
+	static void execute(std::string command);
 	
 };

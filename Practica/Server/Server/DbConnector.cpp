@@ -4,6 +4,8 @@
 
 //#include <thread>
 #include <chrono>
+#include<iostream>
+#include <cstring> 
 
 
 
@@ -74,7 +76,7 @@ int DbConnector::numaraRanduri(std::string afterFrom)
     std::string cautare;
 
     //cautare = "SELECT username FROM users WHERE id > " + std::to_string(nrAnterior) + " AND id <= " + std::to_string(nrAnterior + 10);
-    std::string g = "users";
+   // std::string g = "users";
     cautare = "SELECT COUNT(*) FROM " + afterFrom;
 
     std::cout<<"\n\n"<<cautare<<"\n\n";
@@ -129,7 +131,7 @@ int DbConnector::numaraRanduri(std::string afterFrom)
     return 0;
 }
 
-void DbConnector::selectColoana(std::string cautare, int socket)
+void DbConnector::selectColoana(std::string cautare, int nr,int socket)
 {
     SQLHANDLE hStmt;
     SQLRETURN ret;
@@ -162,18 +164,69 @@ void DbConnector::selectColoana(std::string cautare, int socket)
 
     // Parcurgem fiecare rând rezultat
     while ((ret = SQLFetch(hStmt)) == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
-        SQLCHAR username[255];
-        SQLLEN CBusername;
+        SQLCHAR var1[255],var2[255], var3[255];
+        SQLLEN CBvar1,CBvar2,CBvar3;
 
-        ret = SQLGetData(hStmt, 1, SQL_C_CHAR, username, sizeof(username), &CBusername);
-        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
-            std::cerr << "SQLGetData error" << std::endl;
+       // int nr;
+       if(nr==3)
+        {
+            ret = SQLGetData(hStmt, 1, SQL_C_CHAR, var1, sizeof(var1), &CBvar1);
+            if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+                std::cerr << "SQLGetData error" << std::endl;
             continue; // Trecem la următorul rând dacă există o eroare
+            }
+            ret = SQLGetData(hStmt, 2, SQL_C_CHAR, var2, sizeof(var2), &CBvar2);
+            if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+                std::cerr << "SQLGetData error" << std::endl;
+            continue; // Trecem la următorul rând dacă există o eroare
+            }
+            ret = SQLGetData(hStmt, 3, SQL_C_CHAR, var3, sizeof(var3), &CBvar3);
+            if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+                std::cerr << "SQLGetData error" << std::endl;
+            continue; // Trecem la următorul rând dacă există o eroare
+            }
+           // var1=var1+var2;
+                   char result[255 * 3]; // Ajustăm dimensiunea pentru a preveni overflow-ul
+        strcpy(reinterpret_cast<char*>(result), reinterpret_cast<char*>(var1));
+        strcat(reinterpret_cast<char*>(result), ": ");
+        strcat(reinterpret_cast<char*>(result), reinterpret_cast<char*>(var3));
+        strcat(reinterpret_cast<char*>(result), ": ");
+        strcat(reinterpret_cast<char*>(result), reinterpret_cast<char*>(var2));
+
+        // Copierea rezultatului final în var1
+        strcpy(reinterpret_cast<char*>(var1), reinterpret_cast<char*>(result));
+        }else
+        if(nr==2)
+        {
+            ret = SQLGetData(hStmt, 1, SQL_C_CHAR, var1, sizeof(var1), &CBvar1);
+            if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+                std::cerr << "SQLGetData error" << std::endl;
+            continue; // Trecem la următorul rând dacă există o eroare
+            }
+            ret = SQLGetData(hStmt, 2, SQL_C_CHAR, var2, sizeof(var2), &CBvar2);
+            if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+                std::cerr << "SQLGetData error" << std::endl;
+            continue; // Trecem la următorul rând dacă există o eroare
+            }
+           // var1=var1+var2;
+            strcat(reinterpret_cast<char*>(var2),": ");
+            strcat(reinterpret_cast<char*>(var2), reinterpret_cast<char*>(var1));
+
+            strcpy(reinterpret_cast<char*>(var1), reinterpret_cast<char*>(var2));
         }
+        else
+        {
+            ret = SQLGetData(hStmt, 1, SQL_C_CHAR, var1, sizeof(var1), &CBvar1);
+            if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+                std::cerr << "SQLGetData error" << std::endl;
+            continue; // Trecem la următorul rând dacă există o eroare
+            }
+        }
+        
 
         // Afișăm numele de utilizator (username)
-        std::cout << "Trimite " << username << std::endl;
-        ClientConnector::sendMessage(socket, reinterpret_cast<const char*>(username));
+        std::cout << "Trimite " << var1 << std::endl;
+        ClientConnector::sendMessage(socket, reinterpret_cast<const char*>(var1));
         std::string ack=ClientConnector::receiveMessage(socket);
         if(ack!="ack")
         {
@@ -234,7 +287,7 @@ bool DbConnector::verifyExistence(std::string table, std::string searchObject, s
     }
 }
 
-void DbConnector::ChatMessage(std::string sursa, std::string destinatia, std::string mesaj)
+bool DbConnector::verifyExistenceUserInGrup(std::string table, std::string searchObject, std::string value, std::string user)
 {
     SQLHANDLE hStmt;
     SQLRETURN ret;
@@ -244,13 +297,61 @@ void DbConnector::ChatMessage(std::string sursa, std::string destinatia, std::st
 
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "SQLAllocHandle error" << std::endl;
-        return ; //eroare
+        return false; //eroare
     }
 
-    std::string cautare = "INSERT INTO messages (sursa, destinatie, mesaj) "
+    std::string cautare = "SELECT u.username AS user_name, g.name AS group_name FROM group_users gu JOIN users u ON gu.user_id = u.id JOIN groups g ON gu.group_id = g.id WHERE u.username = '"+user+"' AND g.name = '"+value+"';";
+
+    // std::wstring wide_query(cautare.begin(), cautare.end());
+
+    // // Executați interogarea SQL
+    // ret = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<wchar_t*>(wide_query.c_str())), SQL_NTS);
+    
+    ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLExecDirect error" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return false; //eroare
+    }
+
+
+    // Parcurgem fiecare rând rezultat
+    if ((SQLFetch(hStmt)) == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return true;
+    }
+    else
+    {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return false;
+        
+    }
+}
+
+void DbConnector::ChatMessage(std::string sursa, std::string destinatia, std::string mesaj, std::string type)
+{
+    SQLHANDLE hStmt;
+    SQLRETURN ret;          
+
+    // Alocați un handle de statement
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hStmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLAllocHandle error" << std::endl;
+        return ; //eroare
+    }
+   std::string cautare;
+    if(type=="private")
+        cautare = "INSERT INTO messages (sursa, destinatie, mesaj) "
                           "SELECT u1.id, u2.id, '" + mesaj + "' "
                           "FROM users u1, users u2 "
                           "WHERE u1.username = '" + sursa + "' AND u2.username = '" + destinatia + "'";
+        else
+            cautare = "INSERT INTO group_messages (sursa, destinatie, mesaj) "
+                          "SELECT u1.id, u2.id, '" + mesaj + "' "
+                          "FROM users u1, groups u2 "
+                          "WHERE u1.username = '" + sursa + "' AND u2.name = '" + destinatia + "'";
   
     ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
 
@@ -321,3 +422,46 @@ void DbConnector::log(std::string nume)
     SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
 
 }
+
+void DbConnector::execute(std::string command)
+{
+
+      SQLHANDLE hStmt;
+    SQLRETURN ret;
+
+    // Alocați un handle de statement
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hStmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLAllocHandle error" << std::endl;
+        return ; //eroare
+    }
+
+    std::string cautare = command;
+  
+    ret = SQLExecDirect(hStmt, (SQLCHAR*) cautare.c_str(), SQL_NTS);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "SQLExecDirect error" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return; //eroare
+    }
+
+
+    // Parcurgem fiecare rând rezultat
+    if (ret == SQL_SUCCESS_WITH_INFO) {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        std::cout<<"\nexecutat\n\n";
+        return ;
+    }
+    else
+    {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        std::cout<<"\nneexecutat\n\n";
+        return ;
+        
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+
+}
+

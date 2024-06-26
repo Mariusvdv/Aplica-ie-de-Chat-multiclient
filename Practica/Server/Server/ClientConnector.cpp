@@ -98,6 +98,8 @@ void ClientConnector::creereSoketNou()
         if (clientSocket == -1) {
             perror("Eroare la acceptarea conexiunii");
             close(clientSocket);
+            close(listening);
+            exit(EXIT_FAILURE);
             //disconnectUtilizator(clientSocket);
         }
         else
@@ -134,6 +136,27 @@ void ClientConnector::disconnectUtilizator(int& socket) {
     }
 }
 
+void ClientConnector::DeleteMessage( int &sock)
+{
+    ClientConnector::sendMessage(sock,"ack");
+    std::string id=ClientConnector::receiveMessage(sock);
+    ClientConnector::sendMessage(sock,"ack");
+    std::string sursa=ClientConnector::receiveMessage(sock);
+     ClientConnector::sendMessage(sock,"ack");
+    std::string destinatie=ClientConnector::receiveMessage(sock);
+     ClientConnector::sendMessage(sock,"ack");
+
+     std::string command="DELETE FROM messages WHERE id = "+id+" AND sursa = (SELECT id FROM users WHERE username = '" +sursa+ "') AND destinatie = (SELECT id FROM users WHERE username = '"+destinatie+"');";
+    DbConnector::execute(command);
+     command="DELETE FROM messages WHERE id = "+id+" AND sursa = (SELECT id FROM users WHERE username = '" +destinatie+ "') AND destinatie = (SELECT id FROM users WHERE username = '"+sursa+"');";
+DbConnector::execute(command);
+     command="DELETE FROM group_messages WHERE id = "+id+" AND sursa = (SELECT id FROM users WHERE username = '" +sursa+ "') AND destinatie = (SELECT id FROM groups WHERE name = '"+destinatie+"');";
+DbConnector::execute(command);
+//     std::string command="DELETE FROM group_messages WHERE id = "+id+" AND sursa = (SELECT id FROM groups WHERE username = '" +destinatie+ "') AND destinatie = (SELECT id FROM users WHERE username = '"+sursa+"');";
+
+
+}
+
 void ClientConnector::printUtilizatori()
 {
     for (const auto& user : ClientConnector::utilizatori) {
@@ -143,11 +166,13 @@ void ClientConnector::printUtilizatori()
 
 void ClientConnector::sendMessage(const int &client_socket, const std::string message)
 {
+    std::cout<<"Trimit "<<message<<"\n";
     send(client_socket, message.c_str(), strlen(message.c_str()), 0);
 }
 
 std::string ClientConnector::receiveMessage(int &client_socket)
 {
+    std::cout<<"Astept";
     char buffer[4096];
     memset(buffer, 0, sizeof(buffer));
 
@@ -169,7 +194,7 @@ std::string ClientConnector::receiveMessage(int &client_socket)
     return str;
 }
 
-void ClientConnector::Menu(int &sock)
+void ClientConnector::Menu(int &sock, std::string nume)
 {
     //trimit numarul de clienti din baza de date catre noc pe client
 
@@ -184,17 +209,30 @@ void ClientConnector::Menu(int &sock)
     if(ack!="ack")
     return;
     
-    {
-        std::string query="SELECT username FROM (SELECT *, ROW_NUMBER() OVER(ORDER BY id) AS RowNum FROM users) AS UserWithRowNum WHERE RowNum <= "+std::to_string(n);
-        DbConnector::selectColoana(query, sock);
-    }
+    
+    std::string query="SELECT username FROM (SELECT *, ROW_NUMBER() OVER(ORDER BY id) AS RowNum FROM users) AS UserWithRowNum WHERE RowNum <= "+std::to_string(n);
+    DbConnector::selectColoana(query, 1, sock);
+    
+    std::string afterFrom=" groups g JOIN group_users gu ON g.id = gu.group_id JOIN users u ON gu.user_id = u.id WHERE u.username = '"+nume+"';";
+    n = DbConnector::numaraRanduri(afterFrom);
+    ClientConnector::sendMessage(sock, std::to_string(n));
+    ack=ClientConnector::receiveMessage(sock);
+
+    query=" SELECT UserWithRowNum.name FROM (SELECT *, ROW_NUMBER() OVER(ORDER BY id) AS RowNum FROM groups) AS UserWithRowNum JOIN group_users gu ON UserWithRowNum.id = gu.group_id JOIN users u ON gu.user_id = u.id WHERE RowNum <= "+std::to_string(n)+" AND u.username = '"+nume +"';";
+    DbConnector::selectColoana(query, 1, sock);
 
 }
 
 void ClientConnector::chooseDestination(int &sock)
 {
+    ClientConnector::sendMessage(sock, "ack");
+    std::string source = ClientConnector::receiveMessage(sock);
+
+    ClientConnector::sendMessage(sock, "ack");
     std::string destination = ClientConnector::receiveMessage(sock);
-    if (DbConnector::verifyExistence("users", "username", destination)==true)
+
+    if (DbConnector::verifyExistence("users", "username", destination)==true||DbConnector::verifyExistenceUserInGrup("groups", "name", destination,source)==true)
+    
     {
         ClientConnector::sendMessage(sock, "ok");
     }
@@ -210,37 +248,88 @@ void ClientConnector::Conversation(int &sock)
     std::string username1=ClientConnector::receiveMessage(sock);
     ClientConnector::sendMessage(sock,"ack");
     std::string username2=ClientConnector::receiveMessage(sock);
-  
 
-    std::string afterFrom= " messages m "
+    // ClientConnector::sendMessage(sock,"ack");
+    // std::string type=ClientConnector::receiveMessage(sock);
+
+    std::string type;
+
+    if(DbConnector::verifyExistence("users", "username", username2)==true)
+    {
+        type="private";
+        
+    }
+    else{
+        if(DbConnector::verifyExistenceUserInGrup("groups", "name", username2,username1)==true)
+        {
+            type="group";
+        }
+    }
+    std::cout<<"\n"<<type<<"\n\n";
+    
+
+    std::string query;
+    std::string afterFrom;
+    if(type =="private")
+    {
+    afterFrom= " messages m "
                         "JOIN users u1 ON m.sursa = u1.id "
                         "JOIN users u2 ON m.destinatie = u2.id "
                         "WHERE (u1.username = '" + username1 + "' AND u2.username = '" + username2 + "') "
                         "   OR (u1.username = '" + username2 + "' AND u2.username = '" + username1 + "');";
-
+    }
+    else{
+         afterFrom= " group_messages m "
+                        "JOIN users u1 ON m.sursa = u1.id "
+                        "JOIN groups u2 ON m.destinatie = u2.id "
+                        "WHERE ( u2.name = '" + username2 + "') "
+                        "   OR ( u2.name = '" + username1 + "');";
+    }
     int n = DbConnector::numaraRanduri(afterFrom);
     std::cout<<n;
 
-    {
+    
         //std::cout<<std::endl<<n<<std::endl;
         ClientConnector::sendMessage(sock, std::to_string(n));
         std::string ack = ClientConnector::receiveMessage(sock);
+    if(type=="private")
+    query=
 
-        std::string query="SELECT mesaj"
-    " FROM ("
-    "SELECT m.mesaj,"
-           " ROW_NUMBER() OVER (ORDER BY m.id) AS RowNum"
-    " FROM messages m"
-    " JOIN users u1 ON m.sursa = u1.id"
-    " JOIN users u2 ON m.destinatie = u2.id"
-    " WHERE (u1.username = '" +username1+"' AND u2.username = '"+username2+"')"
-    " OR (u1.username = '"+username2+"' AND u2.username = '"+username1+"')"
-    ") AS UserWithRowNum"
-    " WHERE RowNum <= "+std::to_string(n)+";";
-        DbConnector::selectColoana(query, sock);
+    
+      "  SELECT  UserWithRowNum.id,  UserWithRowNum.mesaj, u1.username AS sursa_username "
+"        FROM ( "
+ "           SELECT m.id, m.mesaj, m.sursa, "
+  "              ROW_NUMBER() OVER (ORDER BY m.id) AS RowNum "
+   "         FROM messages m "
+    "        JOIN users u1 ON m.sursa = u1.id "
+     "       JOIN users u2 ON m.destinatie = u2.id "
+      "      WHERE (u1.username = '" +username1+"' AND u2.username = '"+username2+"') "
+       "         OR (u1.username = '"+username2+"' AND u2.username = '" +username1+"') "
+        ") AS UserWithRowNum "
+        "JOIN users u1 ON UserWithRowNum.sursa = u1.id "
+        "WHERE RowNum <= "+std::to_string(n)+"; ";
+        else{
+
+              query=   
+      "  SELECT  UserWithRowNum.id,  UserWithRowNum.mesaj, u1.username AS sursa_username "
+"        FROM ( "
+ "           SELECT m.id, m.mesaj, m.sursa, "
+  "              ROW_NUMBER() OVER (ORDER BY m.id) AS RowNum "
+   "         FROM group_messages m "
+    "        JOIN users u1 ON m.sursa = u1.id "
+     "       JOIN groups u2 ON m.destinatie = u2.id "
+      "      WHERE ( u2.name = '"+username2+"') "
+       "         OR ( u2.name = '" +username1+"') "
+        ") AS UserWithRowNum "
+        "JOIN users u1 ON UserWithRowNum.sursa = u1.id "
+        "WHERE RowNum <= "+std::to_string(n)+"; ";
+        }
+   
+
+        DbConnector::selectColoana(query, 3, sock);
     
         
-    }
+    
 
 }
 
@@ -252,7 +341,23 @@ void ClientConnector::ChatMessage(int &sock)
     std::string destinatia=ClientConnector::receiveMessage(sock);
     ClientConnector::sendMessage(sock,"ack");
     std::string mesaj=ClientConnector::receiveMessage(sock);
-    DbConnector::ChatMessage(sursa,destinatia,mesaj);
+
+    std::string type;
+
+    if(DbConnector::verifyExistence("users", "username", destinatia)==true)
+    {
+        type="private";
+        
+    }
+    else{
+        if(DbConnector::verifyExistenceUserInGrup("groups", "name", destinatia,sursa)==true)
+        {
+            type="group";
+        }
+    }
+    std::cout<<"\n"<<type<<"\n\n";
+
+    DbConnector::ChatMessage(sursa,destinatia,mesaj,type);
     ClientConnector::sendMessage(sock,"ackafterInsert");
     
 }
